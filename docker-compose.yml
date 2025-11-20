@@ -1,0 +1,102 @@
+services:
+  # 1. Banco de Dados - MongoDB
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      # Variáveis de ambiente básicas para inicialização
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo_data:/data/db
+
+  # 2. Message Broker - RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management # Imagem com a interface de gerenciamento
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" # Porta para o Worker Go e o Produtor Python
+      - "15672:15672" # Porta para a interface de gerenciamento (http://localhost:15672)
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+      
+  # 3. API Core - NestJS (Backend)
+  api-nestjs:
+    # A imagem será construída a partir do Dockerfile que criaremos em 'backend/'
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: api-nestjs
+    ports:
+      - "3000:3000" # Porta padrão do NestJS
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/weatherdb?authSource=admin
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      # ... outras variáveis de ambiente virão no .env
+    depends_on:
+      - mongodb
+      - rabbitmq
+    volumes:
+      - ./backend:/app # Mapeamento para desenvolvimento (hot-reload)
+      - /app/node_modules # Evitar conflito no volume de node_modules
+
+  # 4. Worker - Go
+  worker-go:
+    build:
+      context: ./worker-go
+      dockerfile: Dockerfile
+    container_name: worker-go
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      NESTJS_API_URL: http://api-nestjs:3000
+    depends_on:
+      - rabbitmq
+      - api-nestjs # Deve esperar o NestJS estar no ar
+    volumes:
+      - ./worker-go:/app
+    
+  # 5. Data Collector - Python
+  data-collector:
+    build:
+      context: ./data-collector
+      dockerfile: Dockerfile
+    container_name: data-collector
+    # Usaremos um comando para rodar o script (ex: com um cron-like)
+    command: python /app/collector.py 
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      OPENMETEO_CITY: 'Sua Cidade Aqui' # Ex: 'Sao Paulo'
+      OPENMETEO_LAT: 52.52 # Ex: latitude do seu local
+      OPENMETEO_LON: 13.41 # Ex: longitude do seu local
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./data-collector:/app
+
+  # 6. Frontend - React/Vite
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev # Usaremos um Dockerfile para ambiente de desenvolvimento com Vite
+    container_name: frontend
+    ports:
+      - "5173:5173" # Porta padrão do Vite
+    environment:
+      VITE_API_URL: http://localhost:3000 # URL da API para o Frontend (acessível pelo browser)
+      # Importante: para acesso interno ao Docker, use 'http://api-nestjs:3000'
+    depends_on:
+      - api-nestjs
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+# Volumes para persistir os dados do MongoDB
+volumes:
+  mongo_data:
