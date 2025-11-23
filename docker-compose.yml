@@ -1,49 +1,80 @@
 services:
   # 1. Banco de Dados - MongoDB
   mongodb:
-    image: mongo:latest
+    image: mongo:6
     container_name: mongodb
     ports:
       - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
     environment:
-      # Variáveis de ambiente básicas para inicialização
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password
-    volumes:
-      - mongo_data:/data/db
+    restart: always
+    healthcheck: # Adicione este bloco (Atenção à indentação aqui também!)
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ping: 1})", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   # 2. Message Broker - RabbitMQ
   rabbitmq:
-    image: rabbitmq:3-management # Imagem com a interface de gerenciamento
+    image: rabbitmq:3-management
     container_name: rabbitmq
+    hostname: rabbitmq_host
     ports:
-      - "5672:5672" # Porta para o Worker Go e o Produtor Python
-      - "15672:15672" # Porta para a interface de gerenciamento (http://localhost:15672)
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/mnesia
+
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
-      
+    healthcheck: # Adicione este bloco
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # 3. API Core - NestJS (Backend)
   # 3. API Core - NestJS (Backend)
   api-nestjs:
-    # A imagem será construída a partir do Dockerfile que criaremos em 'backend/'
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      target: production
     container_name: api-nestjs
     ports:
-      - "3000:3000" # Porta padrão do NestJS
+      - "3000:3000"
     environment:
-      NODE_ENV: development
+      # Use apenas uma declaração NODE_ENV, aqui definimos produção.
+      NODE_ENV: production
       MONGODB_URI: mongodb://admin:password@mongodb:27017/weatherdb?authSource=admin
+      PORT: 3000
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      # ... outras variáveis de ambiente virão no .env
+
+    # ----------------------------------------------------
+    # CORREÇÃO CRÍTICA DE INDENTAÇÃO
+    # ----------------------------------------------------
     depends_on:
-      - mongodb
-      - rabbitmq
+      mongodb:
+        condition: service_healthy # Espera o MongoDB
+      rabbitmq:
+        condition: service_healthy # Espera o RabbitMQ
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"] # Use uma rota de saúde real se tiver
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
     volumes:
       - ./backend:/app # Mapeamento para desenvolvimento (hot-reload)
       - /app/node_modules # Evitar conflito no volume de node_modules
+      - /app/dist
 
   # 4. Worker - Go
   worker-go:
@@ -56,11 +87,13 @@ services:
       RABBITMQ_PORT: 5672
       NESTJS_API_URL: http://api-nestjs:3000
     depends_on:
-      - rabbitmq
-      - api-nestjs # Deve esperar o NestJS estar no ar
+      rabbitmq:
+        condition: service_healthy
+      api-nestjs:
+        condition: service_healthy # Agora espera o NestJS saudável
     volumes:
       - ./worker-go:/app
-    
+
   # 5. Data Collector - Python
   data-collector:
     build:
@@ -68,11 +101,12 @@ services:
       dockerfile: Dockerfile
     container_name: data-collector
     # Usaremos um comando para rodar o script (ex: com um cron-like)
-    command: python /app/collector.py 
+    command: python /app/collector.py
     environment:
+      PORT: 3000
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      OPENMETEO_CITY: 'Sua Cidade Aqui' # Ex: 'Sao Paulo'
+      OPENMETEO_CITY: "Sua Cidade Aqui" # Ex: 'Sao Paulo'
       OPENMETEO_LAT: 52.52 # Ex: latitude do seu local
       OPENMETEO_LON: 13.41 # Ex: longitude do seu local
     depends_on:
@@ -99,4 +133,7 @@ services:
 
 # Volumes para persistir os dados do MongoDB
 volumes:
-  mongo_data:
+  mongodb_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
