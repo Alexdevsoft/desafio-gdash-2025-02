@@ -2,11 +2,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { InsightsService } from './insights.service';
 
-@Controller('api/insights') // Ou 'api/insights'
+@Controller('api')
 export class InsightsController {
     constructor(private readonly insightsService: InsightsService) { }
 
-    @Get()
+    @Get('weather/insights')
     async getInsight() {
         return this.insightsService.generateWeatherInsight();
     }

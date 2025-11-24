@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { InsightsService } from './insights.service';
 import { InsightsController } from './insights.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { WeatherLogSchema, WeatherLog } from '../weather/schemas/weather-log.schema'; // Ajuste o caminho
+import { WeatherLogSchema, WeatherLog } from '../weather/schemas/weather-log.schema';
 
 @Module({
   imports: [
