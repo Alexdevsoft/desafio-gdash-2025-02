@@ -7,8 +7,8 @@ import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
         <Routes>
           {/* Rota de Login */}
           <Route path="/login" element={<LoginPage />} />
@@ -25,8 +25,8 @@ function App() {
 
           <Route path="*" element={<h1>404 - Página Não Encontrada</h1>} />
         </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

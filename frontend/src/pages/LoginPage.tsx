@@ -1,13 +1,10 @@
 // frontend/src/pages/LoginPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-// Importe seus componentes shadcn/ui aqui
-// Ex: import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; 
-// Substitua estes por componentes reais do seu projeto
+
 const Card = ({ children, className }: any) => <div className={`border p-4 rounded ${className}`}>{children}</div>;
 const CardHeader = ({ children }: any) => <h2>{children}</h2>;
-const CardTitle = ({ children, className }: any) => <h1 className={className}>{children}</h1>;
 const CardContent = ({ children }: any) => <div>{children}</div>;
 const Input = ({ ...props }: any) => <input {...props} className="border p-2 w-full" />;
 const Button = ({ children, ...props }: any) => <button {...props} className="bg-blue-500 text-white p-2 rounded">{children}</button>;
@@ -22,11 +19,12 @@ export const LoginPage: React.FC = () => {
     const { login, isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
-    // Se já estiver autenticado, redireciona imediatamente para o dashboard
-    if (isAuthenticated) {
-        navigate('/');
-        return null; // Não renderiza nada enquanto redireciona
-    }
+    useEffect(() => {
+        if (isAuthenticated) {
+            // Este código é executado após a renderização.
+            navigate('/');
+        }
+    }, [isAuthenticated, navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,9 +33,12 @@ export const LoginPage: React.FC = () => {
 
         try {
             await login(email, password);
-            navigate('/'); // Sucesso: Redireciona para o Dashboard
+
         } catch (err: any) {
             setError(err.message || 'Ocorreu um erro. Tente novamente.');
+
+        } finally {
+            // O loading precisa parar no caso de erro de login, senão fica travado
             setIsLoading(false);
         }
     };
@@ -46,7 +47,10 @@ export const LoginPage: React.FC = () => {
         <div className="flex items-center justify-center min-h-screen">
             <Card className="w-[380px]">
                 <CardHeader>
-                    <CardTitle className="text-2xl text-center">🔐 Login GDASH</CardTitle>
+                    {/* A CORREÇÃO: Usar um <h3> dentro da CardHeader para evitar o aninhamento <h2> > <h1> */}
+                    <div className="text-2xl text-center font-semibold mb-2">
+                        🔐 Login GDASH
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="grid gap-4">
