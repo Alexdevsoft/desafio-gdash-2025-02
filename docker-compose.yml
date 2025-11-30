@@ -39,8 +39,6 @@ services:
       retries: 5
       start_period: 20s
 
-  # 3. API Core - NestJS (Backend)
-  # 3. API Core - NestJS (Backend)
   api-nestjs:
     build:
       context: ./backend
@@ -49,7 +47,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Use apenas uma declaração NODE_ENV, aqui definimos produção.
       NODE_ENV: production
       MONGODB_URI: mongodb://admin:password@mongodb:27017/weatherdb?authSource=admin
       PORT: 3000
@@ -57,21 +54,27 @@ services:
       RABBITMQ_PORT: 5672
       JWT_SECRET: SEGREDO_MUITO_SECRETO_E_FORTE_DO_PROJETO
 
-    # ----------------------------------------------------
-    # CORREÇÃO CRÍTICA DE INDENTAÇÃO
-    # ----------------------------------------------------
+    # 🛠️ COMANDO DE ESPERA USANDO CURL (Mais provável de funcionar, pois o curl já está lá)
+    command: >
+      sh -c "while ! curl --silent --fail http://mongodb:27017; do
+        echo 'Aguardando o MongoDB (27017)...';
+        sleep 1;
+      done;
+      npm run start:prod" # OU o seu comando de inicialização
+
     depends_on:
       mongodb:
-        condition: service_healthy # Espera o MongoDB
+        condition: service_healthy
       rabbitmq:
-        condition: service_healthy # Espera o RabbitMQ
+        condition: service_healthy
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"] # Use uma rota de saúde real se tiver
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 45s
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
     volumes:
       - ./backend:/app # Mapeamento para desenvolvimento (hot-reload)
       - /app/node_modules # Evitar conflito no volume de node_modules

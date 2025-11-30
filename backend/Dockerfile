@@ -19,7 +19,7 @@ RUN npm run build
 
 # --- ESTÁGIO 2: PRODUÇÃO (Imagem Final) ---
 FROM node:20-alpine AS production 
-RUN apk add --no-cache curl 
+RUN apk add --no-cache curl netcat-openbsd 
 WORKDIR /app
 
 # Copia SÓ as dependências de produção

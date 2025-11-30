@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
+import { CreateUserDto } from '../auth/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -16,28 +17,32 @@ export class AuthService {
         const user = await this.usersService.findByEmail(email);
 
         if (user && (await bcrypt.compare(pass, user.password))) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { password, ...result } = user.toObject();
+            // Retorna o usuário sem a senha para a sessão
+            const { password, ...result } = user;
             return result;
         }
         return null;
     }
 
-    async login(loginDto: LoginDto) {
-        const user = await this.validateUser(loginDto.email, loginDto.password);
-
-        if (!user) {
-            throw new UnauthorizedException('Credenciais inválidas.');
-        }
-
-        const payload = {
-            email: user.email,
-            sub: user._id, // O ID do usuário (subject)
-            role: user.role
-        };
-
+    async login(user: any) {
+        // O payload inclui o email e as roles, essenciais para o RolesGuard
+        const payload = { email: user.email, sub: user._id, roles: user.roles };
         return {
             access_token: this.jwtService.sign(payload),
         };
+    }
+
+    async register(createUserDto: CreateUserDto) {
+        // 1. Verifica se o usuário já existe
+        const existingUser = await this.usersService.findByEmail(createUserDto.email);
+        if (existingUser) {
+            throw new UnauthorizedException('Usuário com este e-mail já existe.');
+        }
+
+        // 2. Cria o usuário (o UserService deve fazer o hashing da senha antes de salvar)
+        const user = await this.usersService.create(createUserDto);
+
+        // 3. Retorna o token JWT para o novo usuário
+        return this.login(user);
     }
 }

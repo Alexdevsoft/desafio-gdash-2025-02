@@ -11,7 +11,7 @@ import { AuthModule } from './auth/auth.module';
 
 // Use um operador de coalescência nula (??) ou um || simples para garantir a string.
 // Isso satisfaz o TypeScript ao garantir que o valor passado não será 'undefined'.
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/fallbackdb';
+const mongoUri = process.env.MONGODB_URI || 'mongodb://mongodb:27017/fallbackdb';
 
 @Module({
   imports: [

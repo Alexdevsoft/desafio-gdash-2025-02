@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { WeatherLog } from '../weather/schemas/weather-log.schema'; // Ajuste o caminho conforme sua estrutura
+import { WeatherLog } from '../weather/schemas/weather-log.schema';
 
 @Injectable()
 export class InsightsService {

@@ -21,7 +21,6 @@ export const LoginPage: React.FC = () => {
 
     useEffect(() => {
         if (isAuthenticated) {
-            // Este código é executado após a renderização.
             navigate('/');
         }
     }, [isAuthenticated, navigate]);
