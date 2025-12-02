@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'; // Adicionado useNavigate aqui
 interface AuthContextType {
     token: string | null;
     login: (email: string, password: string) => Promise<void>;
+    register: (email: string, password: string) => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;
 }
@@ -50,15 +51,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const register = async (email: string, password: string) => {
+        const response = await fetch(`${API_URL}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Falha ao registrar.');
+        }
+
+        // Após o registro bem-sucedido, faz login automaticamente para obter o token.
+        await login(email, password);
+    };
+
     const logout = () => {
         localStorage.removeItem('accessToken');
         setToken(null);
         navigate('/login'); // Redireciona o usuário para o login ao fazer logout
     };
 
-    const value = {
+    const value: AuthContextType = {
         token,
         login,
+        register,
         logout,
         isAuthenticated: !!token,
     };

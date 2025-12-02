@@ -22,6 +22,14 @@ export class WeatherController {
         return { message: 'Log de clima salvo com sucesso', id: savedLog.id };
     }
 
+    @Get('logs')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('Admin', 'User')
+    async findAllLogs() {
+
+        return [];
+    }
+
 
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('Admin', 'User')

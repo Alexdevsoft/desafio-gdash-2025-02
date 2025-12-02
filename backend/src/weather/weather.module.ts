@@ -5,12 +5,24 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { WeatherLog, WeatherLogSchema } from './schemas/weather-log.schema';
 import { WeatherService } from './weather.service';
 import { WeatherController } from './weather.controller';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: WeatherLog.name, schema: WeatherLogSchema },
     ]),
+
+    RabbitMQModule.forRoot({
+      exchanges: [
+        {
+          name: 'amq.topic',
+          type: 'topic',
+        },
+      ],
+      uri: `amqp://${process.env.RABBITMQ_DEFAULT_USER}:${process.env.RABBITMQ_DEFAULT_PASS}@${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`,
+      connectionInitOptions: { wait: true },
+    }),
   ],
   controllers: [WeatherController],
   providers: [WeatherService],

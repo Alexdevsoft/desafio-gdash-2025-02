@@ -4,12 +4,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { WeatherLog, WeatherLogDocument } from './schemas/weather-log.schema';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 @Injectable()
 export class WeatherService {
     constructor(
-        @InjectModel(WeatherLog.name)
-        private weatherLogModel: Model<WeatherLogDocument>,
+        @InjectModel(WeatherLog.name) private weatherLogModel: Model<WeatherLogDocument>,
+        private readonly amqpConnection: AmqpConnection,
     ) { }
 
     /**
@@ -26,6 +27,11 @@ export class WeatherService {
      * Retorna todos os logs de clima (para o dashboard inicial)
      */
     async findAll(): Promise<WeatherLogDocument[]> {
-        return this.weatherLogModel.find().sort({ timestamp: -1 }).limit(100).exec();
+        return this.weatherLogModel.find().sort({ timestamp: -1 }).limit(50).exec();
+    }
+
+    async publishLog(logData: any) {
+        // Nome da exchange/fila deve corresponder ao que o worker-go espera
+        await this.amqpConnection.publish('amq.topic', 'weather.log.create', logData);
     }
 }

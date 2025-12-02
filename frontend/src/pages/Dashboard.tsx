@@ -25,9 +25,9 @@ interface InsightData {
     insight: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-const LOGS_ENDPOINT = `${API_URL}/api/weather/logs`;
-const INSIGHTS_ENDPOINT = `${API_URL}/api/weather/insights`;
+const API_URL_ABSOLUTE = 'http://localhost:3000';
+const LOGS_ENDPOINT = `${API_URL_ABSOLUTE}/api/weather/logs`;
+const INSIGHTS_ENDPOINT = `${API_URL_ABSOLUTE}/api/weather/insights`;
 
 function Dashboard() {
     const [weatherData, setWeatherData] = useState<WeatherLog[]>([]);

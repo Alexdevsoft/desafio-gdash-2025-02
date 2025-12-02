@@ -3,46 +3,55 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
-import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../auth/dto/create-user.dto';
+import { User, UserDocument } from 'src/users/schemas/user.schema';
 
 @Injectable()
 export class AuthService {
     constructor(
-        private usersService: UsersService,
-        private jwtService: JwtService,
+        private userService: UsersService, // Injeção do UserService
+        private jwtService: JwtService, // Injeção do JwtService
     ) { }
 
-    async validateUser(email: string, pass: string): Promise<any> {
-        const user = await this.usersService.findByEmail(email);
+    // 1. MÉTODO DE REGISTRO (Gera o hash da senha antes de salvar)
+    async register(createUserDto: CreateUserDto): Promise<UserDocument> {
+        const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+        const userWithHashedPassword = {
+            ...createUserDto,
+            password: hashedPassword,
+        };
+        return this.userService.create(userWithHashedPassword);
+    }
 
-        if (user && (await bcrypt.compare(pass, user.password))) {
-            // Retorna o usuário sem a senha para a sessão
-            const { password, ...result } = user;
-            return result;
+    // 2. MÉTODO DE VALIDAÇÃO (Usado pelo LocalStrategy)
+    async validateUser(email: string, pass: string): Promise<any> {
+
+        const user = await this.userService.findByEmail(email);
+
+        if (user) {
+
+            const isMatch = await bcrypt.compare(pass, user.password);
+
+            if (isMatch) {
+
+                const { password, ...result } = user.toObject();
+                return result;
+            }
         }
+        // Se o usuário não existir ou a senha estiver errada
         return null;
     }
 
     async login(user: any) {
-        // O payload inclui o email e as roles, essenciais para o RolesGuard
-        const payload = { email: user.email, sub: user._id, roles: user.roles };
+
+        const payload = {
+            userId: user._id || user.userId, // Usa _id do Mongoose ou userId
+            email: user.email,
+            roles: user.roles || ['User'] // Garante que roles exista
+        };
+
         return {
             access_token: this.jwtService.sign(payload),
         };
-    }
-
-    async register(createUserDto: CreateUserDto) {
-        // 1. Verifica se o usuário já existe
-        const existingUser = await this.usersService.findByEmail(createUserDto.email);
-        if (existingUser) {
-            throw new UnauthorizedException('Usuário com este e-mail já existe.');
-        }
-
-        // 2. Cria o usuário (o UserService deve fazer o hashing da senha antes de salvar)
-        const user = await this.usersService.create(createUserDto);
-
-        // 3. Retorna o token JWT para o novo usuário
-        return this.login(user);
     }
 }
