@@ -1,38 +1,43 @@
-// backend/src/weather/schemas/weather-log.schema.ts
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+// Alias para o tipo de documento completo
 export type WeatherLogDocument = WeatherLog & Document;
 
-@Schema({
-    timestamps: true, // Adiciona campos createdAt e updatedAt
-    collection: 'weather_logs', // Nome da coleção no MongoDB
-})
+@Schema({ timestamps: true })
 export class WeatherLog {
-    @Prop({ required: true, type: String })
-    timestamp: string; // Ex: '2025-11-20T17:00:00Z'
+    @Prop({ required: true })
+    timestamp: string;
 
-    @Prop({ required: true, type: Number })
+    @Prop()
     latitude: number;
 
-    @Prop({ required: true, type: Number })
+    @Prop()
     longitude: number;
 
-    @Prop({ required: true, type: Number })
+    @Prop({ required: true })
     temperature_c: number;
 
-    @Prop({ required: true, type: Number })
+    @Prop()
     humidity_percent: number;
 
-    @Prop({ required: true, type: Number })
+    @Prop()
     wind_speed_kmh: number;
 
-    @Prop({ required: true, type: Number })
+    @Prop()
     weather_code: number;
 
-    @Prop({ required: true, type: Number })
+    @Prop()
     precipitation_probability: number;
+
+    @Prop({ default: "Desconhecida" })
+    city: string;
+
+    @Prop({ default: "Não Classificado" })
+    condition: string;
 }
 
 export const WeatherLogSchema = SchemaFactory.createForClass(WeatherLog);
+
+// Index para otimizar buscas por tempo
+WeatherLogSchema.index({ timestamp: -1 });

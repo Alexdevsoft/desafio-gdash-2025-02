@@ -11,8 +11,8 @@ interface WeatherLog {
     _id: string;
     timestamp: string;
     temperature_c: number;
-    humidity: number;
-    pressure_hpa: number;
+    humidity_percent: number;
+    wind_speed_kmh: number;
     city: string;
     condition: string;
 }
@@ -149,7 +149,7 @@ function Dashboard() {
                                 <TableHead>Condição</TableHead>
                                 <TableHead className="text-right">Temperatura (°C)</TableHead>
                                 <TableHead className="text-right">Umidade (%)</TableHead>
-                                <TableHead className="text-right">Pressão (hPa)</TableHead>
+                                <TableHead className="text-right">Vento (km/h)</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -163,9 +163,9 @@ function Dashboard() {
                                     </TableCell>
                                     <TableCell>{log.city}</TableCell>
                                     <TableCell>{log.condition}</TableCell>
-                                    <TableCell className="text-right">{log.temperature_c.toFixed(1)}</TableCell>
-                                    <TableCell className="text-right">{log.humidity}</TableCell>
-                                    <TableCell className="text-right">{log.pressure_hpa}</TableCell>
+                                    <TableCell className="text-right">{(log.temperature_c ?? 0).toFixed(1)}</TableCell>
+                                    <TableCell className="text-right">{(log.humidity_percent ?? 0).toFixed(0)}</TableCell>
+                                    <TableCell className="text-right">{(log.wind_speed_kmh ?? 0).toFixed(1)}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

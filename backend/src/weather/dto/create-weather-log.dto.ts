@@ -1,11 +1,8 @@
-// backend/src/weather/dto/create-weather-log.dto.ts
+import { IsNotEmpty, IsNumber, IsString, IsInt } from 'class-validator';
 
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-
-// Usa DTOs para garantir a validação da requisição
 export class CreateWeatherLogDto {
-    @IsString()
     @IsNotEmpty()
+    @IsString()
     timestamp: string;
 
     @IsNumber()
@@ -23,9 +20,17 @@ export class CreateWeatherLogDto {
     @IsNumber()
     wind_speed_kmh: number;
 
-    @IsNumber()
+    @IsInt() // O Worker Go envia como int
     weather_code: number;
 
     @IsNumber()
     precipitation_probability: number;
+
+    @IsString()
+    @IsNotEmpty()
+    city: string = "Desconhecida"; // Valor default para evitar erros
+
+    @IsString()
+    @IsNotEmpty()
+    condition: string = "Não Classificado"; // Valor default para evitar erros
 }

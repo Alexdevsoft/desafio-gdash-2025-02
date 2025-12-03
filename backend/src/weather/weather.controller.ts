@@ -7,7 +7,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
-@UseGuards(JwtAuthGuard)
 @Controller('weather')
 export class WeatherController {
     constructor(private readonly weatherService: WeatherService) { }
@@ -22,24 +21,25 @@ export class WeatherController {
         return { message: 'Log de clima salvo com sucesso', id: savedLog.id };
     }
 
-    @Get('logs')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('Admin', 'User')
+    @Get('logs')
     async findAllLogs() {
-
-        return [];
+        return this.weatherService.findAll();
     }
 
 
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('Admin', 'User')
-    @Get('insights')
-    async getInsights() {
-        return {
-            averageTemperature: 25,
-            averageHumidity: 60,
-            totalRecords: 100,
-            insight: "Dados de teste carregados."
-        };
+    @Get()
+    async findAllLogsRoot() {
+        return this.weatherService.findAll();
+    }
+
+    // 3. Rota de insights
+    // O InsightsController cuida disso, mas se houvesse uma rota aqui, também precisaria do Guard.
+    @Get('health')
+    getWeatherControllerHealth() {
+        return { status: 'OK', controller: 'WeatherController' };
     }
 }

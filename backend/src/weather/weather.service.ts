@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { WeatherLog, WeatherLogDocument } from './schemas/weather-log.schema';
+import { CreateWeatherLogDto } from './dto/create-weather-log.dto';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 @Injectable()
@@ -18,7 +19,7 @@ export class WeatherService {
      * @param logData Os dados de clima brutos vindos do Worker Go.
      * @returns O documento salvo.
      */
-    async create(logData: WeatherLog): Promise<WeatherLogDocument> {
+    async create(logData: CreateWeatherLogDto): Promise<WeatherLogDocument> {
         const createdLog = new this.weatherLogModel(logData);
         return createdLog.save();
     }

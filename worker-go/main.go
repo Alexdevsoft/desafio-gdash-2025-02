@@ -16,7 +16,6 @@ import (
 const (
 	QUEUE_NAME = "weather_logs_queue"
 	// Endpoint onde a API NestJS receberá os dados.
-	// Usamos o nome do serviço 'api-nestjs' do Docker Compose.
 	NESTJS_API_ENDPOINT = "/api/weather/logs" 
 	MAX_RETRIES         = 5
 	RETRY_DELAY         = 5 * time.Second
@@ -32,21 +31,23 @@ type WeatherLog struct {
 	WindSpeedKmh            float64 `json:"wind_speed_kmh"`
 	WeatherCode             int     `json:"weather_code"`
 	PrecipitationProbability float64 `json:"precipitation_probability"`
+	City 					string 	`json:"city"`
+	Condition 				 string 	`json:"condition"`
 }
 
 // Configuração da conexão com o RabbitMQ
 func getRabbitMQURL() string {
 	user := os.Getenv("RABBITMQ_USER")
 	if user == "" {
-		user = "user" // Default do docker-compose
+		user = "user" 
 	}
 	pass := os.Getenv("RABBITMQ_PASS")
 	if pass == "" {
-		pass = "password" // Default do docker-compose
+		pass = "password" 
 	}
 	host := os.Getenv("RABBITMQ_HOST")
 	if host == "" {
-		host = "rabbitmq" // Nome do serviço no docker-compose
+		host = "rabbitmq" 
 	}
 	port := os.Getenv("RABBITMQ_PORT")
 	if port == "" {
