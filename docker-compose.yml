@@ -1,5 +1,5 @@
 services:
-  # 1. Banco de Dados - MongoDB
+  # Banco de Dados - MongoDB
   mongodb:
     image: mongo:6
     container_name: mongodb
@@ -18,7 +18,7 @@ services:
       retries: 5
       start_period: 10s
 
-  # 2. Message Broker - RabbitMQ
+  # Message Broker - RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -57,7 +57,7 @@ services:
       RABBITMQ_DEFAULT_PASS: password
       JWT_SECRET: SEGREDO_MUITO_SECRETO_E_FORTE_DO_PROJETO
 
-    # 🛠️ COMANDO DE ESPERA USANDO CURL (Mais provável de funcionar, pois o curl já está lá)
+    # COMANDO DE ESPERA USANDO CURL (Mais provável de funcionar, pois o curl já está lá)
     command: >
       sh -c "while ! curl --silent --fail http://mongodb:27017; do
         echo 'Aguardando o MongoDB (27017)...';
@@ -83,7 +83,7 @@ services:
       - /app/node_modules # Evitar conflito no volume de node_modules
       - /app/dist
 
-  # 4. Worker - Go
+  # Worker - Go
   worker-go:
     build:
       context: ./worker-go
@@ -101,27 +101,34 @@ services:
     volumes:
       - ./worker-go:/app
 
-  # 5. Data Collector - Python
+  # Data Collector - Python
   data-collector:
     build:
       context: ./data-collector
       dockerfile: Dockerfile
     container_name: data-collector
-    # Usaremos um comando para rodar o script (ex: com um cron-like)
-    command: python /app/collector.py
+
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+
+    command: python -u /app/collector.py
     environment:
       PORT: 3000
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      OPENMETEO_CITY: "Sua Cidade Aqui" # Ex: 'Sao Paulo'
-      OPENMETEO_LAT: 52.52 # Ex: latitude do seu local
-      OPENMETEO_LON: 13.41 # Ex: longitude do seu local
+      RABBITMQ_USER: user
+      RABBITMQ_PASS: password
+      OPENMETEO_CITY: "São Paulo"
+      OPENMETEO_LAT: -46.84
+      OPENMETEO_LON: -46.36
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./data-collector:/app
 
-  # 6. Frontend - React/Vite
+  # Frontend - React/Vite
   frontend:
     build:
       context: ./frontend
