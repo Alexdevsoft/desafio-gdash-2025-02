@@ -12,12 +12,12 @@ export class UsersService {
     // Usado para o registro de um novo usuário
     async create(createUserDto: CreateUserDto): Promise<UserDocument> {
         const createdUser = new this.userModel(createUserDto);
-        return createdUser.save();
+        return (await createdUser.save()).toObject({ getters: true });
     }
 
     // Usado pelo AuthModule para verificar as credenciais
     async findByEmail(email: string): Promise<UserDocument | null> {
-        return this.userModel.findOne({ email }).select('+password').exec();
+        return this.userModel.findOne({ email }).exec();
     }
 
     // Usado para proteger a rota de Insights (ex: retornar o usuário pelo ID)

@@ -119,9 +119,9 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: user
       RABBITMQ_PASS: password
-      OPENMETEO_CITY: "São Paulo"
-      OPENMETEO_LAT: -46.84
-      OPENMETEO_LON: -46.36
+      OPENMETEO_CITY: "Parnaíba"
+      OPENMETEO_LAT: -2.92
+      OPENMETEO_LON: -41.76
     depends_on:
       rabbitmq:
         condition: service_healthy

@@ -9,19 +9,21 @@ import { InsightsModule } from './insights/insights.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 
-// Use um operador de coalescência nula (??) ou um || simples para garantir a string.
-// Isso satisfaz o TypeScript ao garantir que o valor passado não será 'undefined'.
-const mongoUri = process.env.MONGODB_URI || 'mongodb://mongodb:27017/fallbackdb';
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('A variável de ambiente MONGODB_URI não está definida.');
+  throw new Error('MONGODB_URI é obrigatória para conectar ao MongoDB.');
+}
 
 @Module({
   imports: [
     // Conecta ao MongoDB usando a variável de ambiente (agora forçamos a tipagem com `!`)
-    MongooseModule.forRoot(mongoUri, {
+    MongooseModule.forRoot(MONGODB_URI, {
       serverSelectionTimeoutMS: 5000,
       maxPoolSize: 10,
     }),
     WeatherModule,
-    InsightsModule,
     UsersModule,
     AuthModule,
   ],

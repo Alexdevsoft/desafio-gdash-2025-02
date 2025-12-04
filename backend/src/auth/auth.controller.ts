@@ -1,25 +1,36 @@
 // backend/src/auth/auth.controller.ts
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Request, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { CreateUserDto } from './dto/create-user.dto';
-import type { Request } from 'express';
-
+import { UsersService } from 'src/users/users.service';
+import { User, UserDocument } from 'src/users/schemas/user.schema';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { RolesGuard } from './roles.guard';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+    constructor(private authService: AuthService, private usersService: UsersService) { }
 
     @Post('register')
-    async register(@Body() createUserDto: CreateUserDto) {
-        return this.authService.register(createUserDto);
+    @HttpCode(HttpStatus.CREATED)
+    async register(@Body() createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
+        const user = await this.usersService.create(createUserDto);
+        const { password, ...result } = user.toJSON() as any;
+        return result;
     }
 
     @UseGuards(LocalAuthGuard)
     @Post('login')
     @HttpCode(HttpStatus.OK)
-    async login(@Req() req: Request & { user: any }) {
+    async login(@Request() req: any) {
         // Retorna o token JWT com base no usuário autenticado
         return this.authService.login(req.user);
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Get('profile')
+    getProfile(@Request() req: any) {
+        return req.user;
     }
 }
